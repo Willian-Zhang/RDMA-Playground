@@ -4,7 +4,7 @@ struct config_t rdma_config =
 {
 	NULL,	/* dev_name: according to: ibv_devinfo */
 	1,	/* ib_port: according to: ibv_devinfo -v => phys_port_cnt=1 */
-	-1	/* gid_idx: trivial when using IB; use show_gids to check index when using RoCE */
+	0	/* gid_idx: trivial when using IB; use show_gids to check index when using RoCE */
 };
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -410,7 +410,7 @@ static int connect_qp (struct QP *res, struct cm_con_data_t tmp_con_data)
 	rc = modify_qp_to_init (res->qp);
 	if (rc)
 	{
-		fprintf(stderr, "failed to modify QP state to INIT\n");
+		fprintf(stderr, "failed to modify QP state to INIT: %s\n", strerror(errno));
 		goto connect_qp_exit;
 	}
 	fprintf(stderr, "Modified QP state to INIT\n");
@@ -420,7 +420,7 @@ static int connect_qp (struct QP *res, struct cm_con_data_t tmp_con_data)
 	rc = modify_qp_to_rtr (res->qp, remote_con_data.qp_num, remote_con_data.lid, remote_con_data.gid);
 	if (rc)
 	{
-		fprintf (stderr, "failed to modify QP state to RTR\n");
+		fprintf (stderr, "failed to modify QP state to RTR: %s\n", strerror(errno));
 		goto connect_qp_exit;
 	}
 	fprintf (stderr, "Modified QP state to RTR\n");
@@ -429,7 +429,7 @@ static int connect_qp (struct QP *res, struct cm_con_data_t tmp_con_data)
 	rc = modify_qp_to_rts (res->qp);
 	if (rc)
 	{
-		fprintf (stderr, "failed to modify QP state to RTR\n");
+		fprintf (stderr, "failed to modify QP state to RTS: %s\n", strerror(errno));
 		goto connect_qp_exit;
 	}
 	fprintf(stderr, "Modified QP state to RTS\n");
@@ -464,8 +464,8 @@ static int post_receive(struct QP *res, char* local_buf, uint32_t size)
 	int rc = ibv_post_recv(res->qp, &wr, &bad_wr);
 	if (rc)
 		fprintf(stderr, "Error, ibv_post_recv() failed\n");
-	else
-		fprintf(stdout, "Received Request was posted\n");
+	// else
+	// 	fprintf(stdout, "Received Request was posted\n");
 	return rc;
 }
 
@@ -480,7 +480,7 @@ static int poll_completion(struct QP *res)
 	/* poll the completion for a while before giving up of doing it .. */
 	do
 	{
-		poll_result = ibv_poll_cq(res->cq, 1, &wc);
+		poll_result = ibv_poll_cq(res->cq, 3, &wc);
 	}
 	while ((poll_result == 0));
 
@@ -697,13 +697,15 @@ void RdmaResourcePair::post_receive(char* local, uint32_t size)
 	}
 }
 
-void RdmaResourcePair::poll_completion()
+bool RdmaResourcePair::poll_completion()
 {
 	if (::poll_completion(res))
 	{
 		fprintf(stderr, "poll completion failed\n");
-		assert(false);
+		// assert(false);
+		return false;
 	}
+	return true;
 }
 
 void RdmaResourcePair::send(char* local_buf, uint32_t size, uint64_t remote_offset)

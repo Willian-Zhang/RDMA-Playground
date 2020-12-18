@@ -83,7 +83,7 @@ public:
 
 	void post_receive(char* local, uint32_t size);
 
-	void poll_completion();
+	bool poll_completion();
 	
 	void send(char* local_buf, uint32_t size, uint64_t remote_offset);
 	void send_imm(char* local_buf, uint32_t size, uint64_t remote_offset);
