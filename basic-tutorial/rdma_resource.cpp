@@ -4,7 +4,7 @@ struct config_t rdma_config =
 {
 	NULL,	/* dev_name: according to: ibv_devinfo */
 	1,	/* ib_port: according to: ibv_devinfo -v => phys_port_cnt=1 */
-	0	/* gid_idx: trivial when using IB; use show_gids to check index when using RoCE */
+	-1	/* gid_idx: trivial when using IB; use show_gids to check index when using RoCE */
 };
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -464,8 +464,8 @@ static int post_receive(struct QP *res, char* local_buf, uint32_t size)
 	int rc = ibv_post_recv(res->qp, &wr, &bad_wr);
 	if (rc)
 		fprintf(stderr, "Error, ibv_post_recv() failed\n");
-	// else
-	// 	fprintf(stdout, "Received Request was posted\n");
+	else
+		fprintf(stdout, "Received Request was posted\n");
 	return rc;
 }
 
@@ -506,7 +506,7 @@ static int poll_completion(struct QP *res)
 		{
 			fprintf(stderr, "poll_completion failed with status %s (%d) for wr_id %d, vendor syndrome: 0x%x\n",
 			        ibv_wc_status_str(wc.status), wc.status, (int)wc.wr_id, wc.vendor_err);
-
+			perror("poll_completion: ");
 			rc = 1;
 		}
 	}
@@ -563,7 +563,7 @@ static int post_send (struct QP *res, char* local_buf, uint32_t size, uint64_t r
 	int rc = ibv_post_send (res->qp, &wr, &bad_wr);
 	if (rc)
 	{
-		fprintf(stderr, "Error, ibv_post_send() failed\n");
+		fprintf(stderr, "Error, ibv_post_send() failed: %s\n", strerror(errno));
 	}
 	else
 	{
@@ -765,8 +765,9 @@ void RdmaResourcePair::barrier(const std::string& remote_name, int port)
 
 	zmq::message_t msg, recv_msg;  // dummy message
 	push.send(msg);
-
+	
 	pull.recv(&recv_msg);
+	std::cerr << "---"  << std::endl;
 }
 
 

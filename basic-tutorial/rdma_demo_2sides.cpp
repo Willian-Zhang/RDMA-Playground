@@ -79,7 +79,7 @@ void test_rdma(std::string remote_name, int port, std::string role, char* mem, s
 	for (int i = 0; i < times; ++ i)
 	{
 		auto t1 = steady_clock::now();
-		rdma_communicate_write_imm(rdma, remote_name, port, role);
+		rdma_communicate_send(rdma, remote_name, port, role);
 		auto t2 = steady_clock::now();
 		auto dura = duration_cast<duration<double>>(t2-t1);
 		std::cout << "[Testing] Round time: " << dura.count() << " seconds." << std::endl;
