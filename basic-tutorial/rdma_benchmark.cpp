@@ -22,16 +22,16 @@ bool rdma_communicate_send(RdmaResourcePair& rdma, std::string remote_name, int 
 		// Dummy headed
 		// rdma.post_receive(rdma.get_buf(), rdma.get_buf_size());	
 		// ...
-		std::cerr << "...";
+		// std::cerr << "...";
 		rdma.poll_completion();
-		std::cerr << "[ ]";
+		// std::cerr << "[ ]";
 		rdma.send(rdma.get_buf(), rdma.get_buf_size(), 0);
 		// TODO: Retry
-		std::cerr << "<-";
+		// std::cerr << "<-";
 		rdma.poll_completion();
 		//  next-head:
 		if(!last) {
-			std::cerr << "O";
+			// std::cerr << "O";
 			rdma.post_receive(rdma.get_buf(), rdma.get_buf_size());	
 		}
 		rdma.barrier(remote_name, port);
@@ -40,18 +40,18 @@ bool rdma_communicate_send(RdmaResourcePair& rdma, std::string remote_name, int 
 	if (role == "writer")
 	{
 		rdma.send(rdma.get_buf(), rdma.get_buf_size(), 0);
-		std::cerr << "-";
+		// std::cerr << "-";
 		rdma.poll_completion();
-		std::cerr << ">";	
+		// std::cerr << ">";	
 		rdma.post_receive(rdma.get_buf(), rdma.get_buf_size());	
-		std::cerr << "...";
+		// std::cerr << "...";
 		rdma.barrier(remote_name, port);
 
 		// ...
 		rdma.barrier(remote_name, port);
 		
 		auto r = rdma.poll_completion();
-		std::cerr << "[ ]";	
+		// std::cerr << "[ ]";	
 		return r;
 	}
 	// std::cerr << std::endl;
