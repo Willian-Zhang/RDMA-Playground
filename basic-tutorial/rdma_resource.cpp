@@ -565,30 +565,30 @@ static int post_send (struct QP *res, char* local_buf, uint32_t size, uint64_t r
 	{
 		fprintf(stderr, "Error, ibv_post_send() failed: %s\n", strerror(errno));
 	}
-	else
-	{
-		switch (opcode)
-		{
-		case IBV_WR_SEND:
-			fprintf(stdout, "Send Request was posted\n");
-			break;
-		case IBV_WR_SEND_WITH_IMM:
-			fprintf(stdout, "Send IMM Request was posted\n");
-			break;
-		case IBV_WR_RDMA_WRITE:
-			fprintf(stdout, "RDMA Write Request was posted\n");
-			break;
-		case IBV_WR_RDMA_WRITE_WITH_IMM:
-			fprintf(stdout, "RDMA Write IMM Request was posted\n");
-			break;
-		case IBV_WR_RDMA_READ:
-			fprintf(stdout, "RDMA Read Request was posted\n");
-			break;
-		default:
-			fprintf(stdout, "Unknown Request was posted\n");
-			break;
-		}
-	}
+	// else
+	// {
+	// 	switch (opcode)
+	// 	{
+	// 	case IBV_WR_SEND:
+	// 		fprintf(stdout, "Send Request was posted\n");
+	// 		break;
+	// 	case IBV_WR_SEND_WITH_IMM:
+	// 		fprintf(stdout, "Send IMM Request was posted\n");
+	// 		break;
+	// 	case IBV_WR_RDMA_WRITE:
+	// 		fprintf(stdout, "RDMA Write Request was posted\n");
+	// 		break;
+	// 	case IBV_WR_RDMA_WRITE_WITH_IMM:
+	// 		fprintf(stdout, "RDMA Write IMM Request was posted\n");
+	// 		break;
+	// 	case IBV_WR_RDMA_READ:
+	// 		fprintf(stdout, "RDMA Read Request was posted\n");
+	// 		break;
+	// 	default:
+	// 		fprintf(stdout, "Unknown Request was posted\n");
+	// 		break;
+	// 	}
+	// }
 	return rc;
 }
 
@@ -750,6 +750,14 @@ void RdmaResourcePair::busy_read(char** buf)
 			break;
 	}
 	return;
+}
+
+void RdmaResourcePair::reset_buffer()
+{
+	// auto buf = reinterpret_cast<char*>(get_buf());
+	// strcpy(msg, "reset");
+	auto buf = get_buf();
+	memset(buf, 0, 0);
 }
 
 /* ------------------------ for barrier ------------------------- */

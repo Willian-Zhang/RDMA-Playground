@@ -58,31 +58,6 @@ bool rdma_communicate_send(RdmaResourcePair& rdma, std::string remote_name, int 
 	return 0;
 }
 
-
-bool rdma_communicate_write_imm(RdmaResourcePair& rdma, std::string remote_name, int port, std::string role)
-{
-	if (role == "reader")
-		rdma.post_receive(rdma.get_buf(), 1);
-
-
-	if (role == "writer")
-	{
-		rdma.rdma_write_imm(rdma.get_buf(), rdma.get_buf_size(), 0);
-		return rdma.poll_completion();
-	}
-	else if (role == "reader")
-	{
-		return rdma.poll_completion();
-		// msg was stored in rdma.get_buf() actually.
-	}
-	
-}
-// enum class BenchMethod: char*
-// {
-//     IMM_Write: "IMM Write"
-
-// }
-
 void benchmark_send(std::string remote_name, int port, std::string role, char* mem, size_t size, uint times)
 {
     if (role == "reader" || role == "writer"){
@@ -112,12 +87,45 @@ void benchmark_send(std::string remote_name, int port, std::string role, char* m
 
     auto dura = duration_cast<duration<double>>(t2-t1);
     std::cerr << "[Benchmark] Round time: " << dura.count()*1000000 << " µseconds."  <<
-                 "             average: " << std::setprecision(3) << dura.count()*1000000 /times <<  std::endl;
+                 "             average: " << std::setprecision(3)  << 
+				 						dura.count()*1000000 /times << " µseconds." <<  std::endl;
 }
 
-void benchmark_write_imm(std::string remote_name, int port, std::string role, char* mem, size_t size, uint times)
+
+bool rdma_communicate_write(RdmaResourcePair& rdma, std::string remote_name, int port, std::string role, char* msg, bool last)
+{	
+	auto offset_buf = rdma.get_buf()+1;
+	if (role == "writer")
+	{
+		rdma.rdma_write(offset_buf, strlen(offset_buf), 0);
+		rdma.poll_completion();
+		char* res;
+		rdma.busy_read(&res);
+		// ...
+		rdma.reset_buffer();
+	}
+	else if (role == "reader")
+	{
+		char* res;
+		rdma.busy_read(&res);
+		// ...
+		rdma.reset_buffer();
+		rdma.rdma_write(offset_buf, strlen(offset_buf), 0);
+		rdma.poll_completion();	
+	}
+	
+}
+// enum class BenchMethod: char*
+// {
+//     IMM_Write: "IMM Write"
+
+// }
+
+
+
+void benchmark_write(std::string remote_name, int port, std::string role, char* mem, size_t size, uint times)
 {
-        if (role == "reader" || role == "writer"){
+    if (role == "reader" || role == "writer"){
         std::cerr << "[Benchmark]("<< role << ") Write IMM " <<
             "0(size="<< size<<"): " << times << "times"<< std::endl;
     } else {
@@ -125,19 +133,36 @@ void benchmark_write_imm(std::string remote_name, int port, std::string role, ch
     }// setup rdma connection
 	RdmaResourcePair rdma = rdma_setup(remote_name, port, mem, size);
 
+	// char* msg = (char*)malloc(rdma.get_buf_size());
+	char* offset_msg = reinterpret_cast<char*>(rdma.get_buf()+1);
+	if (role == "writer")
+	{
+		strcpy(offset_msg, "ping");
+	}
+	else if (role == "reader")
+	{
+		strcpy(offset_msg, "pong");
+	}
+	rdma.reset_buffer();
+
     rdma.barrier(remote_name, port);
 
 	auto t1 = steady_clock::now();
-	for (int i = 0; i < times; ++ i)
+	for (int i = times; i > 0; -- i)
 	{
-		rdma_communicate_write_imm(rdma, remote_name, port, role);
+		rdma_communicate_write(rdma, remote_name, port, role, offset_msg, i<=1);
 	}
     auto t2 = steady_clock::now();
     rdma.barrier(remote_name, port);
 
     auto dura = duration_cast<duration<double>>(t2-t1);
-    std::cerr << "[Benchmark] Round time: " << dura.count()*1000000 << " µseconds."  <<
-                 "             average: " << std::setprecision(3) << dura.count()*1000000 /times <<  std::endl;
+    std::cerr << "[Benchmark] Total time: " << dura.count()*1000000 << " µseconds for " 
+											<< times <<" roundtrips."  << std::endl <<
+                 "            average round trip: " << std::setprecision(3)  << 
+				 						dura.count()*1000000 /times << " µseconds." <<  std::endl <<
+				 "            average half round (single) trip: " << std::setprecision(3)  << 
+				 						dura.count()*1000000 /times/2 << " µseconds." <<  std::endl <<						 
+										 ;
 }
 int main(int argc, char** argv)
 {
@@ -150,7 +175,7 @@ int main(int argc, char** argv)
     const auto size = 8;
     char* mem_rdma = (char*)malloc(size);
 
-    benchmark_send(remote_name, port, role, mem_rdma, size, times);
+    benchmark_write(remote_name, port, role, mem_rdma, size, times);
 	
 	return 0;
 }

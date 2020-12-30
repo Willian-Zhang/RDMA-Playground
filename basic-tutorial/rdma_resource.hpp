@@ -97,6 +97,7 @@ public:
 	char* get_buf();
 	uint32_t get_buf_size();
 	void busy_read(char** res);
+	void reset_buffer();
 	
 	// for barrier
 	void barrier(const std::string& remote_name, int port);
