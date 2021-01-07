@@ -157,12 +157,11 @@ void benchmark_write(std::string remote_name, int port, std::string role, char* 
 
     auto dura = duration_cast<duration<double>>(t2-t1);
     std::cerr << "[Benchmark] Total time: " << dura.count()*1000000 << " µseconds for " 
-											<< times <<" roundtrips."  << std::endl <<
+											<< times <<" roundtrips."  << "\n" <<
                  "            average round trip: " << std::setprecision(3)  << 
-				 						dura.count()*1000000 /times << " µseconds." <<  std::endl <<
+				 						dura.count()*1000000 /times << " µseconds." <<  "\n" <<
 				 "            average half round (single) trip: " << std::setprecision(3)  << 
-				 						dura.count()*1000000 /times/2 << " µseconds." <<  std::endl <<						 
-										 ;
+				 						dura.count()*1000000 /times/2 << " µseconds." <<  std::endl;
 }
 int main(int argc, char** argv)
 {
