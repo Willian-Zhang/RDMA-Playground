@@ -757,7 +757,7 @@ void RdmaResourcePair::reset_buffer()
 	// auto buf = reinterpret_cast<char*>(get_buf());
 	// strcpy(msg, "reset");
 	auto buf = get_buf();
-	memset(buf, 0, 0);
+	memset(buf, 0, 1);
 }
 
 /* ------------------------ for barrier ------------------------- */
